@@ -69,7 +69,6 @@ This angulartics plugin supports the following analytics calls:
 ```javascript
 $analytics.pageTrack()
 $analytics.eventTrack()
-$analytics.setOptOut()
 $analytics.setUsernames()
 $analytics.setUserProperties()
 $analytics.setUserPropertiesOnce()
@@ -80,6 +79,7 @@ Check [Angulartics documentation](https://github.com/angulartics/angulartics) fo
 ## Development
 
 ```shell
+npm install
 npm run build
 ```
 

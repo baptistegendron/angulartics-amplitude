@@ -180,16 +180,6 @@ angular.module('angulartics.amplitude', ['angulartics'])
             }
             window.amplitude.getInstance(window.amplitude.myProject).identify(identify);
         });
-
-        /**
-          * Set Opt Out
-          * @param {boolean} value
-          *
-          * @link https://amplitude.zendesk.com/hc/en-us/articles/115001361248#opting-user-out-of-logging
-          */
-        $analyticsProvider.registerSetOptOut(function (value) {
-            window.amplitude.getInstance(window.amplitude.myProject).setOptOut(value===true);
-        });
         
     }]);
 })(angular);

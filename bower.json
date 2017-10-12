@@ -1,7 +1,7 @@
 {
   "name": "angulartics-amplitude",
-  "main": "./lib/angulartics-amplitude.js",
-  "version": "0.9.0",
+  "main": "./src/angulartics-amplitude.js",
+  "version": "1.0.0",
   "dependencies": {
     "angulartics": "^1.4.0"
   },
@@ -9,8 +9,8 @@
     "**/.*",
     "bower_components",
     "node_modules",
-    "example",
     "package.json",
-    "lib/index.js"
+	"package-lock.json",
+    "src/index.js"
   ]
 }
