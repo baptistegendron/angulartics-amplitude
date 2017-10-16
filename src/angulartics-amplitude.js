@@ -16,7 +16,11 @@ angular.module('angulartics.amplitude', ['angulartics'])
      * Loading Amplitude Snippet
      * @link https://amplitude.zendesk.com/hc/en-us/articles/115001361248-JavaScript-SDK-Installation#installation
      */
-    .provider('$analytics_amplitude', [function $amplitudeProvider() {
+    .provider('$analytics_amplitude', ['$analyticsProvider', function($analyticsProvider) {
+        $analyticsProvider.settings.amplitude = {
+            project: null
+        };
+
         // Loading the Amplitude snippet
         (function(e, t) {
             var n = e.amplitude || { _q: [], _iq: {} };
@@ -95,14 +99,33 @@ angular.module('angulartics.amplitude', ['angulartics'])
              * @link https://amplitude.zendesk.com/hc/en-us/articles/115001361248#settings-configuration-options
              */
             initWithProject: function(projectName, apiKey, userId, options, callbackFn) {               
-                window.amplitude.myProject = projectName;
+                $analyticsProvider.settings.amplitude.project = projectName;
+
+                window.amplitude.getInstance(projectName).init(apiKey, userId, options, callbackFn(projectInstance));
+            },
+            /**
+             * Init Amplitude API with a project. This is not necessary to call this function if you have only one project/app.
+             * It ensures a fixed deviceId whatever project is launched on the client browser.
+             *
+             * @param {string} projectName IMPORTANT NOTE: Once you have chosen a name for that instance you cannot change it.
+             * Choose your instance names wisely because every instance's data and settings are tied to its name, and you will
+             * need to continue using that instance name for all future versions of your project to maintain data continuity
+             * @param {string} apiKey
+             * @param {string} userId optional
+             * @param {string} options optional
+             * @param {string} callbackFn(instance) optional
+             *
+             * @link https://amplitude.zendesk.com/hc/en-us/articles/115001361248#settings-configuration-options
+             */
+            initWithProjectAndFixedDeviceId: function (constantDeviceId, projectName, apiKey, userId, options, callbackFn) {
+                $analyticsProvider.settings.amplitude.project = projectName;
 
                 window.amplitude.getInstance().init(apiKey, userId, options, function (defaultInstance) {
                     // access Amplitude's defaultInstance deviceId after initialization:
                     var deviceId = defaultInstance.options.deviceId;
-                    window.amplitude.getInstance(projectName).init(apiKey, userId, options, function(projectInstance) {
+                    window.amplitude.getInstance(projectName).init(apiKey, userId, options, function (projectInstance) {
                         projectInstance.setDeviceId(deviceId);// transferring existing deviceId to new_project
-                        if (callbackFn!=null)
+                        if (callbackFn != null)
                             callbackFn(projectInstance);
                     });
                 });
@@ -112,6 +135,7 @@ angular.module('angulartics.amplitude', ['angulartics'])
     }])
     
     .config(['$analyticsProvider', function($analyticsProvider) {
+        var superProperties = {};
 
         /**
          * Track Pageview in Amplitude
@@ -122,11 +146,13 @@ angular.module('angulartics.amplitude', ['angulartics'])
          * @link https://amplitude.zendesk.com/hc/en-us/articles/115001361248-JavaScript-SDK-Installation#tracking-events
          */
         $analyticsProvider.registerPageTrack(function (path, $location) {
-            window.amplitude.getInstance(window.amplitude.myProject).logEvent('pageView',
-                {
-                    url: path
-                }
-            );
+            var properties = {
+                url: path,
+                host: $location.host()
+            };
+            properties = angular.extend({}, superProperties, properties);
+            
+            window.amplitude.getInstance($analyticsProvider.settings.amplitude.project).logEvent('PageView', properties);
         });
 
         /**
@@ -137,8 +163,11 @@ angular.module('angulartics.amplitude', ['angulartics'])
           *
           * @link https://amplitude.zendesk.com/hc/en-us/articles/115001361248-JavaScript-SDK-Installation#tracking-events
           */
-        $analyticsProvider.registerEventTrack(function (eventName, properties) {
-            window.amplitude.getInstance(window.amplitude.myProject).logEvent(eventName, properties);
+        $analyticsProvider.registerEventTrack(function(eventName, properties) {
+            properties = properties || {};
+            properties = angular.extend({}, superProperties, properties);
+
+            window.amplitude.getInstance($analyticsProvider.settings.amplitude.project).logEvent(eventName, properties);
         });
 
         /**
@@ -149,7 +178,7 @@ angular.module('angulartics.amplitude', ['angulartics'])
          * @link https://amplitude.zendesk.com/hc/en-us/articles/115001361248-JavaScript-SDK-Installation#setting-custom-user-ids
          */
         $analyticsProvider.registerSetUsername(function (username) {
-            window.amplitude.getInstance(window.amplitude.myProject).setUserId(username);
+            window.amplitude.getInstance($analyticsProvider.settings.amplitude.project).setUserId(username);
         });
         
         /**
@@ -161,7 +190,7 @@ angular.module('angulartics.amplitude', ['angulartics'])
           */
         $analyticsProvider.registerSetUserProperties(function (properties) {
             properties = properties || {};
-            window.amplitude.getInstance(window.amplitude.myProject).setUserProperties(properties);
+            window.amplitude.getInstance($analyticsProvider.settings.amplitude.project).setUserProperties(properties);
         });
 
         /**
@@ -175,11 +204,29 @@ angular.module('angulartics.amplitude', ['angulartics'])
             properties = properties || {};
             var identify = new window.amplitude.Identify();            
             for (var property in properties) {
-                    console.log(property,properties[property]);//TODO Del
                 identify.setOnce(property, properties[property]);
             }
-            window.amplitude.getInstance(window.amplitude.myProject).identify(identify);
+            window.amplitude.getInstance($analyticsProvider.settings.amplitude.project).identify(identify);
         });
-        
+
+        /**
+          * Set super properties to be added to all $analytics.pagetTrack and $analytics.eventTrack
+		  * To remove a property, set its value to null
+          *
+		  * @param {object} properties = { superProperty1: value, superPropertyToRemove: null, superProperty2...}
+          */
+        $analyticsProvider.registerSetSuperProperties(function (properties) {
+            for (var property in properties) {
+                if (properties.hasOwnProperty(property)) {
+                    if (properties[property] == null) {
+                        if (superProperties.hasOwnProperty(property))
+                            delete superProperties[property];
+                    } else {
+                        superProperties[property] = properties[property];
+                    }
+                }
+            }
+        });
+
     }]);
 })(angular);

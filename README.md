@@ -53,6 +53,8 @@ myApp.config(['$analytics_amplitudeProvider', function($analytics_amplitudeProvi
     $analytics_amplitudeProvider.init("API_KEY");
     // OR
     $analytics_amplitudeProvider.initWithProject("ProjectName", "API_KEY");
+	// OR
+    $analytics_amplitudeProvider.initWithProjectAndFixedDeviceId("ProjectName", "API_KEY");
 }]);
 ```
 
@@ -72,6 +74,7 @@ $analytics.eventTrack()
 $analytics.setUsernames()
 $analytics.setUserProperties()
 $analytics.setUserPropertiesOnce()
+$analytics.setSuperPropertiesOnce()
 ```
 
 Check [Angulartics documentation](https://github.com/angulartics/angulartics) for more details.
